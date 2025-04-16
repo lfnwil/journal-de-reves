@@ -3,10 +3,13 @@ import { View, StyleSheet, Dimensions } from 'react-native';
 import { TextInput, Button, RadioButton } from 'react-native-paper';
 import { Calendar } from 'react-native-calendars';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
-export default function DreamForm() {
+export default function DreamForm({ mode = 'create' }) {
+  const router = useRouter();
+
   const [dreamText, setDreamText] = useState('');
   const [dreamType, setDreamType] = useState('rêve');
   const [hashtag1, setHashtag1] = useState('');
@@ -18,9 +21,10 @@ export default function DreamForm() {
   const formattedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const [date, setDate] = useState(formattedDate);
 
-  // Charger un rêve à modifier (s'il y en a un)
   useEffect(() => {
     const loadDreamToEdit = async () => {
+      if (mode !== 'edit') return;
+
       try {
         const data = await AsyncStorage.getItem('dreamToEdit');
         if (data) {
@@ -39,7 +43,7 @@ export default function DreamForm() {
     };
 
     loadDreamToEdit();
-  }, []);
+  }, [mode]);
 
   const handleDreamSubmission = async () => {
     if (!dreamText.trim()) {
@@ -72,7 +76,7 @@ export default function DreamForm() {
       await AsyncStorage.setItem('dreamFormDataArray', JSON.stringify(updatedArray));
       await AsyncStorage.removeItem('dreamToEdit');
 
-      // Réinitialisation du formulaire
+      // Réinitialiser le formulaire
       setDreamText('');
       setDreamType('rêve');
       setHashtag1('');
@@ -80,6 +84,8 @@ export default function DreamForm() {
       setHashtag3('');
       setDate(formattedDate);
       setEditingId(null);
+
+      router.back(); // Retour automatique à la page précédente
 
     } catch (error) {
       console.error('Erreur lors de la sauvegarde des données:', error);
