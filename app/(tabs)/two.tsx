@@ -1,19 +1,25 @@
-import { StyleSheet } from 'react-native';
-import { View } from '@/components/Themed';
-import DreamList from '@/components/DreamList';
+import { StyleSheet, ScrollView } from 'react-native';
+import { Text, View } from '@/components/Themed';
+import DreamForm from '@/components/DreamForm';
 
-export default function TabTwoScreen() {
+
+export default function TabOneScreen() {
   return (
-    <View style={styles.container}>
-      <DreamList />
-    </View>
+      <ScrollView contentContainerStyle={styles.container}>
+        <DreamForm />
+      </ScrollView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     paddingTop: 40,
     paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
   },
 });

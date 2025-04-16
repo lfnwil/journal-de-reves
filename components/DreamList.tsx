@@ -1,18 +1,18 @@
 import React, { useState, useCallback } from 'react';
-import { View, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 
-
 export default function DreamList() {
   const [dreams, setDreams] = useState([]);
+  const router = useRouter();
 
   const fetchDreams = async () => {
     try {
       const data = await AsyncStorage.getItem('dreamFormDataArray');
       const dreamArray = data ? JSON.parse(data) : [];
-      setDreams(dreamArray.reverse()); 
+      setDreams(dreamArray.reverse());
     } catch (error) {
       console.error('Erreur lors du chargement des rêves :', error);
     }
@@ -31,15 +31,18 @@ export default function DreamList() {
       const filtered = dreamArray.filter((dream) => dream.id !== id);
       await AsyncStorage.setItem('dreamFormDataArray', JSON.stringify(filtered));
       setDreams(filtered.reverse());
-      console.log('Rêve supprimé avec succès.');
     } catch (error) {
       console.error('Erreur lors de la suppression :', error);
     }
   };
 
   const handleEditDream = async (dream) => {
-    await AsyncStorage.setItem('dreamToEdit', JSON.stringify(dream));
-    router.push('/edit');
+    try {
+      await AsyncStorage.setItem('dreamToEdit', JSON.stringify(dream));
+      router.push('/edit');
+    } catch (error) {
+      console.error("Erreur lors de la préparation du rêve à modifier :", error);
+    }
   };
 
   return (
@@ -53,8 +56,13 @@ export default function DreamList() {
         dreams.map((dream) => (
           <View key={dream.id} style={styles.card}>
             <Text style={styles.date}>📅 {dream.selectedDate}</Text>
-            <Text style={styles.type}>🌙 {dream.dreamType}</Text>
-            <Text style={styles.text}>{dream.dreamText}</Text>
+            <Text>🌙 Type : {dream.dreamType}</Text>
+            <Text>🛏️ Qualité du sommeil : {dream.sleepQuality}/10</Text>
+            <Text>🎭 Tonalité : {dream.tone}</Text>
+            <Text>📍 Lieu : {dream.location}</Text>
+            <Text>👥 Personnages : {dream.characters}</Text>
+            <Text>😶‍🌫️ Émotions : {dream.emotion}</Text>
+            <Text style={styles.text}>📝 {dream.dreamText}</Text>
 
             {dream.hashtags && dream.hashtags.some(Boolean) && (
               <Text style={styles.hashtags}>
@@ -63,18 +71,10 @@ export default function DreamList() {
             )}
 
             <View style={styles.buttonRow}>
-              <Button
-                mode="outlined"
-                onPress={() => handleDeleteDream(dream.id)}
-                style={styles.button}
-              >
+              <Button mode="outlined" onPress={() => handleDeleteDream(dream.id)} style={styles.button}>
                 Supprimer
               </Button>
-              <Button
-                mode="contained"
-                onPress={() => handleEditDream(dream)}
-                style={styles.button}
-              >
+              <Button mode="contained" onPress={() => handleEditDream(dream)} style={styles.button}>
                 Modifier
               </Button>
             </View>
@@ -84,8 +84,6 @@ export default function DreamList() {
     </ScrollView>
   );
 }
-
-const router = useRouter();
 
 const styles = StyleSheet.create({
   container: {
@@ -102,7 +100,7 @@ const styles = StyleSheet.create({
     color: '#555',
     marginBottom: 12,
   },
-  card: {   
+  card: {
     backgroundColor: '#f2f2f2',
     padding: 12,
     borderRadius: 8,
@@ -110,10 +108,7 @@ const styles = StyleSheet.create({
   },
   date: {
     fontWeight: 'bold',
-  },
-  type: {
-    marginTop: 4,
-    fontStyle: 'italic',
+    marginBottom: 4,
   },
   text: {
     marginTop: 8,
