@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { TextInput, Button, RadioButton } from 'react-native-paper';
 import { Calendar } from 'react-native-calendars';
@@ -12,18 +12,47 @@ export default function DreamForm() {
   const [hashtag1, setHashtag1] = useState('');
   const [hashtag2, setHashtag2] = useState('');
   const [hashtag3, setHashtag3] = useState('');
+  const [editingId, setEditingId] = useState(null);
 
   const today = new Date();
   const formattedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const [date, setDate] = useState(formattedDate);
 
+  // Charger un rêve à modifier (s'il y en a un)
+  useEffect(() => {
+    const loadDreamToEdit = async () => {
+      try {
+        const data = await AsyncStorage.getItem('dreamToEdit');
+        if (data) {
+          const dream = JSON.parse(data);
+          setDreamText(dream.dreamText);
+          setDreamType(dream.dreamType);
+          setHashtag1(dream.hashtags?.[0] || '');
+          setHashtag2(dream.hashtags?.[1] || '');
+          setHashtag3(dream.hashtags?.[2] || '');
+          setDate(dream.selectedDate);
+          dream.id && setEditingId(dream.id);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement du rêve à modifier :', error);
+      }
+    };
+
+    loadDreamToEdit();
+  }, []);
+
   const handleDreamSubmission = async () => {
+    if (!dreamText.trim()) {
+      console.warn('Veuillez entrer un rêve avant de l’enregistrer.');
+      return;
+    }
+
     try {
       const existingData = await AsyncStorage.getItem('dreamFormDataArray');
       const formDataArray = existingData ? JSON.parse(existingData) : [];
 
-      const newDream = {
-        id: Date.now(), 
+      const updatedDream = {
+        id: editingId || Date.now(),
         dreamText,
         dreamType,
         todayDate: new Date().toISOString(),
@@ -31,15 +60,27 @@ export default function DreamForm() {
         hashtags: [hashtag1, hashtag2, hashtag3],
       };
 
-      formDataArray.push(newDream);
-      await AsyncStorage.setItem('dreamFormDataArray', JSON.stringify(formDataArray));
+      let updatedArray;
+      if (editingId) {
+        updatedArray = formDataArray.map((dream) =>
+          dream.id === editingId ? updatedDream : dream
+        );
+      } else {
+        updatedArray = [...formDataArray, updatedDream];
+      }
 
+      await AsyncStorage.setItem('dreamFormDataArray', JSON.stringify(updatedArray));
+      await AsyncStorage.removeItem('dreamToEdit');
+
+      // Réinitialisation du formulaire
       setDreamText('');
       setDreamType('rêve');
       setHashtag1('');
       setHashtag2('');
       setHashtag3('');
       setDate(formattedDate);
+      setEditingId(null);
+
     } catch (error) {
       console.error('Erreur lors de la sauvegarde des données:', error);
     }
@@ -95,7 +136,7 @@ export default function DreamForm() {
       />
 
       <Button mode="contained" onPress={handleDreamSubmission} style={styles.button}>
-        Enregistrer le rêve
+        {editingId ? 'Modifier le rêve' : 'Enregistrer le rêve'}
       </Button>
     </View>
   );
