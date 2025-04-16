@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Dimensions, Platform, Pressable } from 'react-native';
-import { TextInput, Button, RadioButton, Text } from 'react-native-paper';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { View, StyleSheet, Dimensions } from 'react-native';
+import { TextInput, Button, RadioButton } from 'react-native-paper';
+import { Calendar } from 'react-native-calendars';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -11,33 +12,37 @@ export default function DreamForm() {
   const [hashtag1, setHashtag1] = useState('');
   const [hashtag2, setHashtag2] = useState('');
   const [hashtag3, setHashtag3] = useState('');
-  const [date, setDate] = useState(new Date());
-  const [showPicker, setShowPicker] = useState(false);
 
-  const handleDateChange = (event, selectedDate) => {
-    setShowPicker(false);
-    if (selectedDate) {
-      setDate(selectedDate);
+  const today = new Date();
+  const formattedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const [date, setDate] = useState(formattedDate);
+
+  const handleDreamSubmission = async () => {
+    try {
+      const existingData = await AsyncStorage.getItem('dreamFormDataArray');
+      const formDataArray = existingData ? JSON.parse(existingData) : [];
+
+      const newDream = {
+        id: Date.now(), 
+        dreamText,
+        dreamType,
+        todayDate: new Date().toISOString(),
+        selectedDate: date,
+        hashtags: [hashtag1, hashtag2, hashtag3],
+      };
+
+      formDataArray.push(newDream);
+      await AsyncStorage.setItem('dreamFormDataArray', JSON.stringify(formDataArray));
+
+      setDreamText('');
+      setDreamType('rêve');
+      setHashtag1('');
+      setHashtag2('');
+      setHashtag3('');
+      setDate(formattedDate);
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde des données:', error);
     }
-  };
-
-  const handleSubmit = () => {
-    const dreamData = {
-      dreamText,
-      dreamType,
-      hashtags: [hashtag1, hashtag2, hashtag3],
-      date: date.toISOString(), // ou un format lisible si tu préfères
-    };
-
-    console.log('Rêve soumis :', dreamData);
-
-    // Reset
-    setDreamText('');
-    setDreamType('rêve');
-    setHashtag1('');
-    setHashtag2('');
-    setHashtag3('');
-    setDate(new Date());
   };
 
   return (
@@ -57,19 +62,6 @@ export default function DreamForm() {
         <RadioButton.Item label="Rêve lucide" value="lucide" />
         <RadioButton.Item label="Cauchemar" value="cauchemar" />
       </RadioButton.Group>
-
-      <Pressable onPress={() => setShowPicker(true)} style={styles.dateInput}>
-        <Text>Sélectionner une date : {date.toLocaleDateString()}</Text>
-      </Pressable>
-
-      {showPicker && (
-        <DateTimePicker
-          value={date}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={handleDateChange}
-        />
-      )}
 
       <TextInput
         label="Hashtag 1"
@@ -93,7 +85,16 @@ export default function DreamForm() {
         style={styles.input}
       />
 
-      <Button mode="contained" onPress={handleSubmit} style={styles.button}>
+      <Calendar
+        style={styles.calendar}
+        current={date}
+        onDayPress={(day) => setDate(day.dateString)}
+        markedDates={{
+          [date]: { selected: true, disableTouchEvent: true, selectedDotColor: 'orange' },
+        }}
+      />
+
+      <Button mode="contained" onPress={handleDreamSubmission} style={styles.button}>
         Enregistrer le rêve
       </Button>
     </View>
@@ -109,13 +110,11 @@ const styles = StyleSheet.create({
     width: width * 0.9,
     alignSelf: 'center',
   },
-  dateInput: {
+  calendar: {
+    marginTop: 16,
     marginBottom: 16,
-    padding: 12,
-    backgroundColor: '#eee',
-    borderRadius: 8,
-    width: width * 0.9,
-    alignSelf: 'center',
+    borderRadius: 10,
+    overflow: 'hidden',
   },
   button: {
     marginTop: 16,
