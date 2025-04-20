@@ -4,14 +4,32 @@ import { Text, Button } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 
+type Character = { id: number; name: string };
+type Hashtag = { id: number; label: string };
+type Emotion = { id: number; name: string };
+type Location = { id: number; name: string };
+
+type Dream = {
+  id: number;
+  dreamText: string;
+  dreamType: string;
+  tone: number;
+  sleepQuality: number;
+  characters?: Character[];
+  locations?: Location[];
+  emotions?: Emotion[];
+  selectedDate: string;
+  hashtags?: Hashtag[];
+};
+
 export default function DreamList() {
-  const [dreams, setDreams] = useState([]);
+  const [dreams, setDreams] = useState<Dream[]>([]);
   const router = useRouter();
 
   const fetchDreams = async () => {
     try {
       const data = await AsyncStorage.getItem('dreamFormDataArray');
-      const dreamArray = data ? JSON.parse(data) : [];
+      const dreamArray: Dream[] = data ? JSON.parse(data) : [];
       setDreams(dreamArray.reverse());
     } catch (error) {
       console.error('Erreur lors du chargement des rêves :', error);
@@ -24,10 +42,10 @@ export default function DreamList() {
     }, [])
   );
 
-  const handleDeleteDream = async (id) => {
+  const handleDeleteDream = async (id: number) => {
     try {
       const data = await AsyncStorage.getItem('dreamFormDataArray');
-      const dreamArray = data ? JSON.parse(data) : [];
+      const dreamArray: Dream[] = data ? JSON.parse(data) : [];
       const filtered = dreamArray.filter((dream) => dream.id !== id);
       await AsyncStorage.setItem('dreamFormDataArray', JSON.stringify(filtered));
       setDreams(filtered.reverse());
@@ -36,7 +54,7 @@ export default function DreamList() {
     }
   };
 
-  const handleEditDream = async (dream) => {
+  const handleEditDream = async (dream: Dream) => {
     try {
       await AsyncStorage.setItem('dreamToEdit', JSON.stringify(dream));
       router.push('/edit');
@@ -59,14 +77,30 @@ export default function DreamList() {
             <Text>🌙 Type : {dream.dreamType}</Text>
             <Text>🛏️ Qualité du sommeil : {dream.sleepQuality}/10</Text>
             <Text>🎭 Tonalité : {dream.tone}</Text>
-            <Text>📍 Lieu : {dream.location}</Text>
-            <Text>👥 Personnages : {dream.characters}</Text>
-            <Text>😶‍🌫️ Émotions : {dream.emotion}</Text>
+
+            {Array.isArray(dream.locations) && dream.locations.length > 0 && (
+              <Text>
+                📍 Lieux : {dream.locations.map((loc) => loc.name).join(', ')}
+              </Text>
+            )}
+
+            {Array.isArray(dream.characters) && dream.characters.length > 0 && (
+              <Text>
+                👥 Personnages : {dream.characters.map((char) => char.name).join(', ')}
+              </Text>
+            )}
+
+            {Array.isArray(dream.emotions) && dream.emotions.length > 0 && (
+              <Text>
+                😶‍🌫️ Émotions : {dream.emotions.map((e) => e.name).join(', ')}
+              </Text>
+            )}
+
             <Text style={styles.text}>📝 {dream.dreamText}</Text>
 
-            {dream.hashtags && dream.hashtags.some(Boolean) && (
+            {Array.isArray(dream.hashtags) && dream.hashtags.length > 0 && (
               <Text style={styles.hashtags}>
-                🔖 {dream.hashtags.filter(Boolean).map(tag => `#${tag}`).join(' ')}
+                🔖 {dream.hashtags.map((tag) => `#${tag.label}`).join(' ')}
               </Text>
             )}
 

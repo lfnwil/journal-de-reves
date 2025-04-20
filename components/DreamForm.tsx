@@ -5,7 +5,10 @@ import { Calendar } from 'react-native-calendars';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import Slider from '@react-native-community/slider';
-
+import Tags from './Tags';
+import Characters from './Characters';
+import Locations from './Locations';
+import Emotions from './Emotions';
 
 const { width } = Dimensions.get('window');
 
@@ -15,14 +18,12 @@ export default function DreamForm({ mode = 'create' }) {
   const [dreamText, setDreamText] = useState('');
   const [dreamType, setDreamType] = useState('rêve');
   const [tone, setTone] = useState(5);
-  const [sleepQuality, setSleepQuality] = useState(5); 
-  const [characters, setCharacters] = useState('');
-  const [location, setLocation] = useState('');
-  const [emotion, setEmotion] = useState('');
-  const [hashtag1, setHashtag1] = useState('');
-  const [hashtag2, setHashtag2] = useState('');
-  const [hashtag3, setHashtag3] = useState('');
-  const [editingId, setEditingId] = useState(null);
+  const [sleepQuality, setSleepQuality] = useState(5);
+  const [characters, setCharacters] = useState<{ id: number; name: string }[]>([]);
+  const [locations, setLocations] = useState<{ id: number; name: string }[]>([]);
+  const [emotions, setEmotions] = useState<{ id: number; name: string }[]>([]);
+  const [hashtags, setHashtags] = useState<{ id: number; label: string }[]>([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   const today = new Date();
   const formattedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -38,14 +39,12 @@ export default function DreamForm({ mode = 'create' }) {
           const dream = JSON.parse(data);
           setDreamText(dream.dreamText);
           setDreamType(dream.dreamType);
-          setTone(dream.tone || 'neutre');
+          setTone(dream.tone || 5);
           setSleepQuality(dream.sleepQuality || 5);
-          setCharacters(dream.characters || '');
-          setLocation(dream.location || '');
-          setEmotion(dream.emotion || '');
-          setHashtag1(dream.hashtags?.[0] || '');
-          setHashtag2(dream.hashtags?.[1] || '');
-          setHashtag3(dream.hashtags?.[2] || '');
+          setCharacters(Array.isArray(dream.characters) ? dream.characters : []);
+          setLocations(Array.isArray(dream.locations) ? dream.locations : []);
+          setEmotions(Array.isArray(dream.emotions) ? dream.emotions : []);
+          setHashtags(Array.isArray(dream.hashtags) ? dream.hashtags : []);
           setDate(dream.selectedDate);
           dream.id && setEditingId(dream.id);
         }
@@ -74,15 +73,15 @@ export default function DreamForm({ mode = 'create' }) {
         tone,
         sleepQuality,
         characters,
-        location,
-        emotion,
+        locations,
+        emotions,
         todayDate: new Date().toISOString(),
         selectedDate: date,
-        hashtags: [hashtag1, hashtag2, hashtag3],
+        hashtags,
       };
 
       const updatedArray = editingId
-        ? formDataArray.map((dream) => dream.id === editingId ? updatedDream : dream)
+        ? formDataArray.map((dream: any) => dream.id === editingId ? updatedDream : dream)
         : [...formDataArray, updatedDream];
 
       await AsyncStorage.setItem('dreamFormDataArray', JSON.stringify(updatedArray));
@@ -90,18 +89,16 @@ export default function DreamForm({ mode = 'create' }) {
 
       setDreamText('');
       setDreamType('rêve');
-      setTone('');
-      setSleepQuality('');
-      setCharacters('');
-      setLocation('');
-      setEmotion('');
-      setHashtag1('');
-      setHashtag2('');
-      setHashtag3('');
+      setTone(5);
+      setSleepQuality(5);
+      setCharacters([]);
+      setLocations([]);
+      setEmotions([]);
+      setHashtags([]);
       setDate(formattedDate);
       setEditingId(null);
 
-      router.back();
+      router.replace('/');
     } catch (error) {
       console.error('Erreur lors de la sauvegarde des données:', error);
     }
@@ -125,96 +122,57 @@ export default function DreamForm({ mode = 'create' }) {
         <RadioButton.Item label="Cauchemar" value="cauchemar" />
       </RadioButton.Group>
 
+      <View style={styles.sliderContainer}>
+        <Text style={styles.sliderLabel}>Qualité du sommeil : {sleepQuality}/10</Text>
+        <Slider
+          minimumValue={0}
+          maximumValue={10}
+          step={1}
+          value={sleepQuality}
+          onValueChange={setSleepQuality}
+          style={styles.slider}
+          minimumTrackTintColor="#1FB28A"
+          maximumTrackTintColor="#d3d3d3"
+          thumbTintColor="#1FB28A"
+        />
+      </View>
 
-        <View style={styles.sliderContainer}>
-            <Text style={styles.sliderLabel}>Qualité du sommeil : {sleepQuality}/10</Text>
-            <Slider
-                minimumValue={0}
-                maximumValue={10}
-                step={1}
-                value={sleepQuality}
-                onValueChange={setSleepQuality}
-                style={styles.slider}
-                minimumTrackTintColor="#1FB28A"
-                maximumTrackTintColor="#d3d3d3"
-                thumbTintColor="#1FB28A"
-            />
-        </View>
+      <View style={styles.sliderContainer}>
+        <Text style={styles.sliderLabel}>Tonalité du rêve : {tone}/10</Text>
+        <Slider
+          minimumValue={0}
+          maximumValue={10}
+          step={1}
+          value={tone}
+          onValueChange={setTone}
+          style={styles.slider}
+          minimumTrackTintColor="#1FB28A"
+          maximumTrackTintColor="#d3d3d3"
+          thumbTintColor="#1FB28A"
+        />
+      </View>
 
-        <View style={styles.sliderContainer}>
-            <Text style={styles.sliderLabel}>Tonalité du rêve : {tone}/10</Text>
-            <Slider
-                minimumValue={0}
-                maximumValue={10}
-                step={1}
-                value={tone}
-                onValueChange={setTone}
-                style={styles.slider}
-                minimumTrackTintColor="#1FB28A"
-                maximumTrackTintColor="#d3d3d3"
-                thumbTintColor="#1FB28A"
-            />
-        </View>
+      <Characters characters={characters} setCharacters={setCharacters} />
+      <Locations locations={locations} setLocations={setLocations} />
+      <Emotions emotions={emotions} setEmotions={setEmotions} />
+      <Tags tags={hashtags} setTags={setHashtags} />
 
-        <TextInput
-            label="Personnages présents"
-            value={characters}
-            onChangeText={setCharacters}
-            mode="outlined"
-            style={styles.input}
-        />
-        <TextInput
-            label="Lieu du rêve"
-            value={location}
-            onChangeText={setLocation}
-            mode="outlined"
-            style={styles.input}
-        />
-        <TextInput
-            label="Émotions ressenties"
-            value={emotion}
-            onChangeText={setEmotion}
-            mode="outlined"
-            style={styles.input}
-        />
-        <TextInput
-            label="Hashtag 1"
-            value={hashtag1}
-            onChangeText={setHashtag1}
-            mode="outlined"
-            style={styles.input}
-        />
-        <TextInput
-            label="Hashtag 2"
-            value={hashtag2}
-            onChangeText={setHashtag2}
-            mode="outlined"
-            style={styles.input}
-        />
-        <TextInput
-            label="Hashtag 3"
-            value={hashtag3}
-            onChangeText={setHashtag3}
-            mode="outlined"
-            style={styles.input}
-        />
+      <Calendar
+        style={styles.calendar}
+        current={date}
+        onDayPress={(day) => setDate(day.dateString)}
+        markedDates={{
+          [date]: {
+            selected: true,
+            disableTouchEvent: true,
+            selectedDotColor: 'orange',
+          },
+        }}
+      />
 
-        <Calendar
-            style={styles.calendar}
-            current={date}
-            onDayPress={(day) => setDate(day.dateString)}
-            markedDates={{
-            [date]: {
-                selected: true,
-                disableTouchEvent: true,
-                selectedDotColor: 'orange',
-            },
-            }}
-        />
-
-        <Button mode="contained" onPress={handleDreamSubmission} style={styles.button}>
-            {editingId ? 'Modifier le rêve' : 'Enregistrer le rêve'}
-        </Button>
+      <Button mode="contained" onPress={handleDreamSubmission} style={styles.button}>
+        {editingId ? 'Modifier le rêve' : 'Enregistrer le rêve'}
+      </Button>
     </View>
   );
 }
@@ -246,5 +204,8 @@ const styles = StyleSheet.create({
   slider: {
     width: '100%',
     height: 40,
-  },  
+  },
+  sliderLabel: {
+    marginBottom: 8,
+  },
 });
