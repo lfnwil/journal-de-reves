@@ -3,7 +3,7 @@ import { Text, View } from '@/components/Themed';
 import DreamForm from '@/components/DreamForm';
 
 
-export default function TabOneScreen() {
+export default function TabTwoScreen() {
   return (
       <ScrollView contentContainerStyle={styles.container}>
         <DreamForm />
