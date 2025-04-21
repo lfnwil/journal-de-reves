@@ -54,7 +54,10 @@ export default function Emotions({ emotions, setEmotions }: Props) {
 const styles = StyleSheet.create({
   container: { marginVertical: 10 },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  input: { flex: 1 },
+  input: { 
+    flex: 1,
+    backgroundColor: '#222', 
+  },
   addButton: { height: 56, justifyContent: 'center' },
   list: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 10, gap: 8 },
   item: {

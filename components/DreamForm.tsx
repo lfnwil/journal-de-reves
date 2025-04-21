@@ -180,21 +180,31 @@ export default function DreamForm({ mode = 'create' }) {
 const styles = StyleSheet.create({
   container: {
     padding: 16,
+    flex: 1,
+  },
+  label:{
+    color: '#ffffff'
   },
   input: {
     marginBottom: 10,
     width: width * 0.9,
     alignSelf: 'center',
+    backgroundColor: '#1e1e1e',
+    color: '#',
+    border: 'none', 
   },
   calendar: {
     marginTop: 16,
     marginBottom: 16,
     borderRadius: 10,
     overflow: 'hidden',
+    backgroundColor: '#1e1e1e',
   },
   button: {
     marginTop: 16,
     alignSelf: 'center',
+    backgroundColor: '#1E90FF',
+    borderRadius: 8,
   },
   sliderContainer: {
     marginBottom: 16,
@@ -207,5 +217,7 @@ const styles = StyleSheet.create({
   },
   sliderLabel: {
     marginBottom: 8,
+    color: '#ffffff',
   },
 });
+

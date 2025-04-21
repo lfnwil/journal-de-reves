@@ -60,7 +60,13 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    backgroundColor: '#222',
+    color: 'white',
   },
+  label: {
+    color:'white',
+  },
+
   addButton: {
     height: 56,
     justifyContent: 'center',
@@ -86,3 +92,4 @@ const styles = StyleSheet.create({
     margin: 0,
   },
 });
+
